@@ -26,13 +26,25 @@ class MainActivity : AppCompatActivity(), androidx.appcompat.widget.SearchView.O
         binding.searchBreed.setOnQueryTextListener(this)
     }
 
-    private fun initCharacter(heroes: List<CharacterResponse>) {
-        this.heroes = heroes
-        heroeAdapter = HeroeAdapter(heroes)
+    private fun initCharacter(heroes: List<CharacterResponse>, powerStats: List<CharacterPowerStats>, images: List<CharacterImage>) {
+        // Combina los datos de CharacterResponse, CharacterPowerStats y CharacterImage según el ID del personaje
+        val combinedData = mutableListOf<Triple<CharacterResponse, CharacterPowerStats, CharacterImage>>()
+        for (i in heroes.indices) {
+            val character = heroes[i]
+            val powerStat = powerStats[i]
+            val image = images.find { it.id == character.id }
+            if (image != null) {
+                combinedData.add(Triple(character, powerStat, image))
+            }
+        }
+
+        // Configura el adaptador con los datos combinados
+        heroeAdapter = HeroeAdapter(combinedData)
         binding.rvHeroe.setHasFixedSize(true)
         binding.rvHeroe.layoutManager = LinearLayoutManager(this)
         binding.rvHeroe.adapter = heroeAdapter
     }
+
 
     private fun getRetrofit(): Retrofit {
         return Retrofit.Builder()
@@ -48,18 +60,38 @@ class MainActivity : AppCompatActivity(), androidx.appcompat.widget.SearchView.O
 
     private fun searchByName(query: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            val call = getRetrofit().create(APIService::class.java).searchCharacterByName(query).execute()
-            val response = call.body() as SearchResponse?
+            val searchCall = getRetrofit().create(APIService::class.java).searchCharacterByName(query).execute()
+            val searchResponse = searchCall.body() as SearchResponse?
+
+            val powerStatsList = mutableListOf<CharacterPowerStats>()
+            val imageList = mutableListOf<CharacterImage>()
+            if (searchResponse?.response == "success") {
+                for (character in searchResponse.results) {
+                    val powerStatsCall = getRetrofit().create(APIService::class.java).getPowerStatsById(character.id).execute()
+                    val powerStatsResponse = powerStatsCall.body() as CharacterPowerStats?
+                    powerStatsResponse?.let {
+                        powerStatsList.add(it)
+                    }
+                    val imageCall = getRetrofit().create(APIService::class.java).getImageById(character.id).execute()
+                    val imageResponse = imageCall.body() as CharacterImage?
+                    imageResponse?.let {
+                        imageList.add(it)
+                    }
+                }
+            }
+
             runOnUiThread {
-                if (response?.response == "success") {
-                    initCharacter(response.results)
+                if (searchResponse?.response == "success") {
+                    initCharacter(searchResponse.results, powerStatsList, imageList)
                 } else {
                     showErrorDialog()
                 }
                 hideKeyboard()
             }
+
         }
     }
+
 
 
     private fun showErrorDialog() {

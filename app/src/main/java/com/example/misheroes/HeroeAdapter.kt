@@ -7,10 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.misheroes.databinding.ItemHeroeBinding
 import com.squareup.picasso.Picasso
 
-
-
-
-class HeroeAdapter(val heroes: List<CharacterResponse>) : RecyclerView.Adapter<HeroeAdapter.ViewHolder>() {
+class HeroeAdapter(val heroes: List<Triple<CharacterResponse, CharacterPowerStats, CharacterImage>>) : RecyclerView.Adapter<HeroeAdapter.ViewHolder>() {
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = heroes[position]
@@ -30,8 +27,22 @@ class HeroeAdapter(val heroes: List<CharacterResponse>) : RecyclerView.Adapter<H
 
         private val binding = ItemHeroeBinding.bind(view)
 
-        fun bind(hero: CharacterResponse) {
-            binding.tvSuperHero.text = hero.name
+        fun bind(hero: Triple<CharacterResponse, CharacterPowerStats, CharacterImage>) {
+            val character = hero.first
+            val powerStats = hero.second
+            val characterImage = hero.third
+
+            binding.tvSuperHero.text = character.name
+            binding.tvIntelligence.text = "Intelligence: ${powerStats.intelligence}"
+            binding.tvStrength.text = "Strength: ${powerStats.strength}"
+            binding.tvSpeed.text = "Speed: ${powerStats.speed}"
+            binding.tvDurability.text = "Durability: ${powerStats.durability}"
+            binding.tvPower.text = "Power: ${powerStats.power}"
+            binding.tvCombat.text = "Combat: ${powerStats.combat}"
+
+            Picasso.get().load(characterImage.url).into(binding.ivHeroImage)
         }
+
     }
+
 }

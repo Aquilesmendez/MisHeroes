@@ -9,5 +9,10 @@ interface APIService {
     @GET("search/{name}")
     fun searchCharacterByName(@Path("name") name: String): Call<SearchResponse>
 
+    @GET("{id}/powerstats")
+    fun getPowerStatsById(@Path("id") id: String): Call<CharacterPowerStats>
 
+    @GET("{id}/image")
+    fun getImageById(@Path("id") id: String): Call<CharacterImage>
 }
+
